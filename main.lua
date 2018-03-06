@@ -1,0 +1,54 @@
+require("lib.love_helper")
+joycon = require("joycon")
+
+local leftJoyCon, rightJoyCon
+local log = {}
+
+function l.draw()
+	lg.print("Press + on the right Joy-Con and - on the left Joy-Con, then home to merge. Press the capture button to separate.")
+	for i, v in ipairs(log) do
+		lg.print(v, 0, i * 15)
+	end
+end
+
+function l.keypressed(key, scancode, isRepeat)
+	if key == "escape" then
+		le.quit()
+	end
+end
+
+function l.gamepadpressed(js, button)
+	table.insert(log, js:getName() .. ": " .. button)
+	-- print(js:getName(), button)
+	if joycon.isJoyCon(js) then
+		if button == "back" then
+			leftJoyCon = js
+		elseif button == "start" then
+			rightJoyCon = js
+		elseif button == "guide" and leftJoyCon and rightJoyCon then
+			joycon.merge(leftJoyCon, rightJoyCon)
+		elseif button == "capture" and leftJoyCon and rightJoyCon then
+			joycon.separate(leftJoyCon)
+		end
+	end
+end
+
+function l.joystickadded(js)
+	joycon.joystickadded(js)
+end
+
+function l.joystickpressed(js, button)
+	joycon.joystickpressed(js, button)
+end
+
+function l.joystickreleased(js, button)
+	joycon.joystickreleased(js, button)
+end
+
+function l.joystickhat(js, hat, direction)
+	joycon.joystickhat(js, hat, direction)
+end
+
+function l.joystickaxis(js, axis, value)
+	joycon.joystickaxis(js, axis, value)
+end
