@@ -21,6 +21,8 @@ local buttons = {
 	merged_zlr = 16
 }
 
+joycon.buttons = buttons
+
 -- local xbox = {
 -- 	a = 2,
 -- 	b = 1,
@@ -58,6 +60,10 @@ local function convertToXbox(button)
 		button = "guide"
 	elseif button == "plus" then
 		button = "start"
+	elseif button == "l" then
+		button = "leftshoulder"
+	elseif button == "r" then
+		button = "rightshoulder"
 	end
 	return button
 end
@@ -228,15 +234,26 @@ function joycon.joystickaxis(js, axis, value)
 	return false -- Joy-Cons use hats instead of the axis with LOVE for some reason. Hopefully this'll be fixed in the future.
 end
 
-function joycon.joystickadded(js)
-	local name = js:getName()
+function joycon.registerController(js, name) -- On Windows, Switch controllers show up as Wireless Controller. Not very useful. People'll have to manually register them.
 	local guid = js:getGUID()
+	if joycon.isJoyCon(js) then return true end
 	if name == "Pro Controller" then
-		-- Pro Controller only needs its ABXY button mappings' changed.
-		love.joystick.setGamepadMapping(guid, "a", "button", buttons.a)
-		love.joystick.setGamepadMapping(guid, "b", "button", buttons.b)
-		love.joystick.setGamepadMapping(guid, "x", "button", buttons.x)
-		love.joystick.setGamepadMapping(guid, "y", "button", buttons.y)
+		-- -- Pro Controller only needs its ABXY button mappings' changed.
+		-- love.joystick.setGamepadMapping(guid, "a", "button", buttons.a)
+		-- love.joystick.setGamepadMapping(guid, "b", "button", buttons.b)
+		-- love.joystick.setGamepadMapping(guid, "x", "button", buttons.x)
+		-- love.joystick.setGamepadMapping(guid, "y", "button", buttons.y)
+		-- The Pro Controller needs to be completely set up on Windows, so why not do it everywhere?
+		for k, v in pairs(buttons) do
+			if k == "merged_lr" or k == "merged_zlr" or k == "capture" then
+			elseif k == "zl" then
+				love.joystick.setGamepadMapping(guid, "triggerleft", "axis", v)
+			elseif k == "zr" then
+				love.joystick.setGamepadMapping(guid, "triggerright", "axis", v)
+			else
+				love.joystick.setGamepadMapping(guid, convertToXbox(k), "button", v)
+			end
+		end
 	elseif name == "Joy-Con (R)" then -- Joy-Cons require a bit more work
 		table.insert(joycon.joycons, createJoyCon(js))
 	elseif name == "Joy-Con (L)" then
@@ -245,6 +262,10 @@ function joycon.joystickadded(js)
 		return false
 	end
 	return true
+end
+
+function joycon.joystickadded(js)
+	return joycon.registerController(js, js:getName())
 end
 
 function joycon.merge(js1, js2)

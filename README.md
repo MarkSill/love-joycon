@@ -1,6 +1,8 @@
 # love-joycon
 This is a project that adds Joy-Con support to LÖVE. Additionally, the library remaps the Pro Controller to match its button layout and add support for the capture button.
 
+This library doesn't work with Windows. It looks to be a problem with SDL?
+
 ## Usage
 You need to pass the four `love.joystick*` functions' arguments to `joycon`.
 
