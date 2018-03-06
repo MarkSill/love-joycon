@@ -1,7 +1,9 @@
 # love-joycon
 This is a project that adds Joy-Con support to LÖVE. Additionally, the library remaps the Pro Controller to match its button layout and add support for the capture button.
 
-This library doesn't work with Windows. It looks to be a problem with SDL?
+This library doesn't work properly with Windows due to misnaming of the controllers. It looks to be a problem with SDL?
+
+To run the demo on Windows, you have to register connected controllers manually. To register a Joy-Con, hold L/R + ZL/ZR, then click the joystick. To register a Pro Controller, hold L + R, then press the capture button.
 
 ## Usage
 You need to pass the four `love.joystick*` functions' arguments to `joycon`.

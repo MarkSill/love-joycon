@@ -1,5 +1,6 @@
 local joycon = {
-	joycons = {}
+	joycons = {},
+	proControllers = {}
 }
 
 local buttons = {
@@ -41,8 +42,8 @@ local function ends(str, endStr)
 	return endStr == "" or str:sub(-endStr:len()) == endStr
 end
 
-local function isLeft(js)
-	return ends(js:getName(), "(L)")
+local function isLeft(name)
+	return ends(name, "(L)")
 end
 
 local function getJoyConButton(button)
@@ -68,17 +69,32 @@ local function convertToXbox(button)
 	return button
 end
 
-local function createJoyCon(js)
+local function createJoyCon(js, name)
 	local jc = {
-		left = isLeft(js),
+		left = isLeft(name),
 		merged = nil, -- default to not merging Joy-Cons (this is set to the reference to the other Joy-Con when merged)
 		id = js:getID()
 	}
 	return jc
 end
 
+local function createProController(js)
+	local pc = {
+		id = js:getID()
+	}
+	return pc
+end
+
 local function getJoyCon(js)
 	for _, v in ipairs(joycon.joycons) do
+		if v.id == js:getID() then
+			return v
+		end
+	end
+end
+
+local function getProController(js)
+	for _, v in ipairs(joycon.proControllers) do
 		if v.id == js:getID() then
 			return v
 		end
@@ -169,10 +185,18 @@ function joycon.joystickpressed(js, button)
 	local jc = getJoyCon(js)
 	if jc then
 		return handleJoyCon(js, jc, button, true)
-	elseif js:getName() == "Pro Controller" then
+	elseif joycon.isProController(js) then
 		if button == buttons.capture then
 			if love.gamepadpressed then
 				love.gamepadpressed(js, "capture")
+			end
+		elseif button == buttons.zl then
+			if love.gamepadaxis then
+				love.gamepadaxis(js, "lefttrigger", 1)
+			end
+		elseif button == buttons.zr then
+			if love.gamepadaxis then
+				love.gamepadaxis(js, "righttrigger", 1)
 			end
 		end
 	end
@@ -183,6 +207,20 @@ function joycon.joystickreleased(js, button)
 	local jc = getJoyCon(js)
 	if jc then
 		return handleJoyCon(js, jc, button)
+	elseif joycon.isProController(js) then
+		if button == buttons.capture then
+			if love.gamepadreleased then
+				love.gamepadreleased(js, "capture")
+			end
+		elseif button == buttons.zl then
+			if love.gamepadaxis then
+				love.gamepadaxis(js, "triggerleft", 0)
+			end
+		elseif button == buttons.zr then
+			if love.gamepadaxis then
+				love.gamepadaxis(js, "triggerright", 0)
+			end
+		end
 	end
 	return false
 end
@@ -238,26 +276,22 @@ function joycon.registerController(js, name) -- On Windows, Switch controllers s
 	local guid = js:getGUID()
 	if joycon.isJoyCon(js) then return true end
 	if name == "Pro Controller" then
-		-- -- Pro Controller only needs its ABXY button mappings' changed.
-		-- love.joystick.setGamepadMapping(guid, "a", "button", buttons.a)
-		-- love.joystick.setGamepadMapping(guid, "b", "button", buttons.b)
-		-- love.joystick.setGamepadMapping(guid, "x", "button", buttons.x)
-		-- love.joystick.setGamepadMapping(guid, "y", "button", buttons.y)
 		-- The Pro Controller needs to be completely set up on Windows, so why not do it everywhere?
 		for k, v in pairs(buttons) do
 			if k == "merged_lr" or k == "merged_zlr" or k == "capture" then
 			elseif k == "zl" then
-				love.joystick.setGamepadMapping(guid, "triggerleft", "axis", v)
+				-- love.joystick.setGamepadMapping(guid, "triggerleft", "axis", v)
 			elseif k == "zr" then
-				love.joystick.setGamepadMapping(guid, "triggerright", "axis", v)
+				-- love.joystick.setGamepadMapping(guid, "triggerright", "axis", v)
 			else
 				love.joystick.setGamepadMapping(guid, convertToXbox(k), "button", v)
 			end
 		end
+		table.insert(joycon.proControllers, createProController(js))
 	elseif name == "Joy-Con (R)" then -- Joy-Cons require a bit more work
-		table.insert(joycon.joycons, createJoyCon(js))
+		table.insert(joycon.joycons, createJoyCon(js, name))
 	elseif name == "Joy-Con (L)" then
-		table.insert(joycon.joycons, createJoyCon(js))
+		table.insert(joycon.joycons, createJoyCon(js, name))
 	else
 		return false
 	end
@@ -284,6 +318,14 @@ end
 
 function joycon.isJoyCon(js)
 	return getJoyCon(js) ~= nil
+end
+
+function joycon.isSwitchController(js)
+	return joycon.isJoyCon(js) or joycon.isProController(js)
+end
+
+function joycon.isProController(js)
+	return getProController(js) ~= nil
 end
 
 function joycon.isLeftJoyCon(js)

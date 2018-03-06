@@ -6,7 +6,7 @@ local log = {}
 
 function l.update(dt)
 	for _, js in ipairs(lj.getJoysticks()) do
-		if joycon.isJoyCon(js) or js:isGamepad() then
+		if joycon.isSwitchController(js) then
 		else
 			if js:isDown(joycon.buttons.merged_lr) and js:isDown(joycon.buttons.merged_zlr) then
 				if js:isDown(joycon.buttons.leftstick) then
@@ -14,7 +14,7 @@ function l.update(dt)
 				elseif js:isDown(joycon.buttons.rightstick) then
 					joycon.registerController(js, "Joy-Con (R)")
 				end
-			elseif js:isDown(js, joycon.buttons.capture) and js:isDown(js, joycon.buttons.l) and js:isDown(js, joycon.buttons.r) then
+			elseif js:isDown(joycon.buttons.capture) and js:isDown(joycon.buttons.l) and js:isDown(joycon.buttons.r) then
 				joycon.registerController(js, "Pro Controller")
 			end
 		end
@@ -36,7 +36,6 @@ end
 
 function l.gamepadpressed(js, button)
 	table.insert(log, js:getName() .. ": " .. button)
-	-- print(js:getName(), button)
 	if joycon.isJoyCon(js) then
 		if button == "back" then
 			leftJoyCon = js
@@ -68,8 +67,4 @@ end
 
 function l.joystickaxis(js, axis, value)
 	joycon.joystickaxis(js, axis, value)
-end
-
-function l.gamepadaxis(js, axis, value)
-	print(js:getName(), axis, value)
 end
